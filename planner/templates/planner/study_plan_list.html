@@ -1,0 +1,75 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Study Plans - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>My Study Plans 📅</h1>
+            <p style="color: var(--neutral-600); margin-top: var(--space-2);">View all your study plans and schedules</p>
+        </div>
+    </div>
+    
+    {% if plans %}
+    <div class="grid grid-2">
+        {% for plan in plans %}
+        <div class="card fade-in {% if not plan.is_active %}opacity-60{% endif %}">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">{{ plan.name }}</h3>
+                    <span class="badge badge-primary">{{ plan.subject.name }}</span>
+                </div>
+                <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    {% if plan.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-secondary">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="grid grid-2" style="margin-bottom: var(--space-4);">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Exam Date</div>
+                        <div style="font-weight: 600;">{{ plan.exam_date|date:"M d, Y" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Days Left</div>
+                        <div style="font-weight: 600; color: {% if plan.days_remaining < 7 %}var(--danger){% elif plan.days_remaining < 30 %}var(--warning){% else %}var(--success){% endif %};">
+                            {{ plan.days_remaining }} days
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Daily Hours</div>
+                        <div style="font-weight: 600;">{{ plan.daily_study_hours }}h</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Total Days</div>
+                        <div style="font-weight: 600;">{{ plan.total_days_available }}</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: var(--space-2);">
+                    <a href="{% url 'study_plan_detail' plan.pk %}" class="btn btn-primary" style="flex: 1;">
+                        View Schedule
+                    </a>
+                    <a href="{% url 'study_plan_calendar' plan.pk %}" class="btn btn-outline" title="Calendar View">
+                        📆
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📅</div>
+        <h2 class="empty-state-title">No Study Plans Yet</h2>
+        <p class="empty-state-text">Create a study plan to get a personalized schedule based on your exam date and available time</p>
+        <a href="{% url 'subject_list' %}" class="btn btn-primary btn-lg">Go to Subjects</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

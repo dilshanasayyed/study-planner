@@ -1,0 +1,181 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Schedule - {{ schedule.date|date:"M d, Y" }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="card card-gradient" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <div>
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: var(--space-1);">
+                    {{ schedule.study_plan.name }}
+                </div>
+                <h1 class="card-title" style="font-size: 2rem;">
+                    {{ schedule.date|date:"l, F d, Y" }}
+                </h1>
+                {% if schedule.date == today %}
+                <span class="badge" style="background: var(--warning); color: white; margin-top: var(--space-2);">
+                    📅 Today
+                </span>
+                {% endif %}
+            </div>
+            <div style="display: flex; gap: var(--space-2);">
+                {% if not schedule.is_completed %}
+                <a href="{% url 'daily_schedule_complete' schedule.pk %}" class="btn btn-success">
+                    ✓ Mark Day Complete
+                </a>
+                {% else %}
+                <span class="badge badge-success" style="padding: var(--space-3) var(--space-5);">
+                    ✅ Completed
+                </span>
+                {% endif %}
+                <a href="{% url 'study_plan_detail' schedule.study_plan.pk %}" class="btn btn-outline" style="background: white; color: var(--primary-600);">
+                    ← Back to Plan
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="grid grid-3">
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Total Topics</div>
+                    <div class="stat-value">{{ scheduled_topics.count }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Completed</div>
+                    <div class="stat-value">{{ scheduled_topics|length|add:"-"|add:scheduled_topics.count }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Total Hours</div>
+                    <div class="stat-value">{{ schedule.total_hours_planned }}h</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notes Section -->
+    {% if schedule.notes %}
+    <div class="alert alert-info" style="margin-bottom: var(--space-8);">
+        <strong>📝 Notes:</strong>
+        <p style="margin: var(--space-2) 0 0 0;">{{ schedule.notes }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Scheduled Topics -->
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📚 Topics for Today</h2>
+            <span class="badge badge-primary">{{ scheduled_topics.count }} topics</span>
+        </div>
+        
+        <div class="card-body">
+            {% if scheduled_topics %}
+            <div class="topic-list">
+                {% for scheduled in scheduled_topics %}
+                <div class="topic-item {% if scheduled.is_completed %}completed{% endif %}" style="margin-bottom: var(--space-4);">
+                    <div style="min-width: 80px; text-align: center; padding: var(--space-3); background: var(--primary-50); border-radius: var(--radius-md);">
+                        <div style="font-size: 0.75rem; color: var(--primary-600); font-weight: 600; margin-bottom: var(--space-1);">
+                            TIME
+                        </div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-700);">
+                            {{ scheduled.allocated_hours }}h
+                        </div>
+                    </div>
+                    
+                    <div class="topic-info" style="flex: 1;">
+                        <div class="topic-name" style="font-size: 1.25rem;">
+                            {{ scheduled.topic.name }}
+                        </div>
+                        <div class="topic-meta" style="margin-top: var(--space-2);">
+                            <span class="badge badge-{{ scheduled.topic.importance }}">
+                                {{ scheduled.topic.get_importance_display }} Priority
+                            </span>
+                            {% if scheduled.topic.is_exam_critical %}
+                            <span class="badge badge-danger">⭐ Exam Critical</span>
+                            {% endif %}
+                            <span>📖 {{ scheduled.topic.subject.name }}</span>
+                            <span>⏱️ Est: {{ scheduled.topic.estimated_hours }}h</span>
+                        </div>
+                        
+                        {% if scheduled.topic.description %}
+                        <p style="margin-top: var(--space-2); color: var(--neutral-600); font-size: 0.875rem;">
+                            {{ scheduled.topic.description|truncatewords:30 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="topic-actions" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                        {% if scheduled.is_completed or scheduled.topic.is_completed %}
+                        <span class="badge badge-success" style="padding: var(--space-2) var(--space-4);">
+                            ✅ Done
+                        </span>
+                        {% else %}
+                        <a href="{% url 'topic_complete' scheduled.topic.pk %}" class="btn btn-success btn-sm">
+                            ✓ Complete
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'topic_edit' scheduled.topic.pk %}" class="btn btn-secondary btn-sm">
+                            ✏️ Edit
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <h3 class="empty-state-title">No Topics Scheduled</h3>
+                <p class="empty-state-text">This day doesn't have any topics scheduled yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Study Tips -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">💡 Study Tips for Maximum Effectiveness</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-2">
+                <div style="padding: var(--space-4); background: var(--primary-50); border-radius: var(--radius-lg); border-left: 4px solid var(--primary-600);">
+                    <h4 style="margin-bottom: var(--space-2);">🎯 Focus Techniques</h4>
+                    <ul style="margin-left: var(--space-5); color: var(--neutral-700);">
+                        <li>Use the Pomodoro Technique (25 min study, 5 min break)</li>
+                        <li>Eliminate distractions (phone, social media)</li>
+                        <li>Study in a well-lit, quiet environment</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: var(--space-4); background: var(--success-light); border-radius: var(--radius-lg); border-left: 4px solid var(--success);">
+                    <h4 style="margin-bottom: var(--space-2);">📝 Active Learning</h4>
+                    <ul style="margin-left: var(--space-5); color: var(--neutral-700);">
+                        <li>Take notes in your own words</li>
+                        <li>Teach concepts to someone else</li>
+                        <li>Practice with problems and questions</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: var(--space-4); background: var(--warning-light); border-radius: var(--radius-lg); border-left: 4px solid var(--warning);">
+                    <h4 style="margin-bottom: var(--space-2);">💪 Stay Healthy</h4>
+                    <ul style="margin-left: var(--space-5); color: var(--neutral-700);">
+                        <li>Take regular breaks every hour</li>
+                        <li>Stay hydrated and eat nutritious snacks</li>
+                        <li>Get 7-8 hours of sleep</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: var(--space-4); background: var(--info-light); border-radius: var(--radius-lg); border-left: 4px solid var(--info);">
+                    <h4 style="margin-bottom: var(--space-2);">🔄 Review Strategy</h4>
+                    <ul style="margin-left: var(--space-5); color: var(--neutral-700);">
+                        <li>Review at the end of each session</li>
+                        <li>Complete your revision tasks on time</li>
+                        <li>Make flashcards for key concepts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

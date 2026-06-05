@@ -1,0 +1,75 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}PDFs - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>My PDFs 📄</h1>
+            <p style="color: var(--neutral-600); margin-top: var(--space-2);">Manage all your uploaded study materials</p>
+        </div>
+        <a href="{% url 'pdf_upload' %}" class="btn btn-primary">
+            ⬆️ Upload PDF
+        </a>
+    </div>
+    
+    {% if pdfs %}
+    <div class="grid grid-2">
+        {% for pdf in pdfs %}
+        <div class="card fade-in">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title" style="font-size: 1.25rem;">{{ pdf.title }}</h3>
+                    {% if pdf.subject %}
+                    <span class="badge badge-primary" style="margin-top: var(--space-2);">{{ pdf.subject.name }}</span>
+                    {% endif %}
+                </div>
+                <span class="badge badge-{% if pdf.processing_status == 'completed' %}success{% elif pdf.processing_status == 'failed' %}danger{% elif pdf.processing_status == 'processing' %}warning{% else %}secondary{% endif %}">
+                    {{ pdf.get_processing_status_display }}
+                </span>
+            </div>
+            
+            <div class="card-body">
+                <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Pages</div>
+                        <div style="font-weight: 600; font-size: 1.125rem;">{{ pdf.page_count }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Uploaded</div>
+                        <div style="font-weight: 600; font-size: 1.125rem;">{{ pdf.uploaded_at|date:"M d" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Topics</div>
+                        <div style="font-weight: 600; font-size: 1.125rem;">{{ pdf.topics.count }}</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: var(--space-2);">
+                    <a href="{% url 'pdf_detail' pdf.pk %}" class="btn btn-primary" style="flex: 1;">
+                        View Details
+                    </a>
+                    {% if pdf.processing_status == 'completed' and pdf.topics.count == 0 %}
+                    <a href="{% url 'pdf_topics_review' pdf.pk %}" class="btn btn-success" title="Extract Topics">
+                        📝
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'pdf_delete' pdf.pk %}" class="btn btn-danger" title="Delete">
+                        🗑️
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📄</div>
+        <h2 class="empty-state-title">No PDFs Yet</h2>
+        <p class="empty-state-text">Upload your first PDF to automatically extract topics and create study plans</p>
+        <a href="{% url 'pdf_upload' %}" class="btn btn-primary btn-lg">Upload First PDF</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

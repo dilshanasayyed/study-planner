@@ -1,0 +1,224 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}{{ plan.name }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="card card-gradient" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <div>
+                <h1 class="card-title" style="font-size: 2rem;">{{ plan.name }}</h1>
+                <div style="margin-top: var(--space-2); display: flex; gap: var(--space-2); align-items: center;">
+                    <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">
+                        {{ plan.subject.name }}
+                    </span>
+                    {% if plan.is_active %}
+                    <span class="badge" style="background: var(--success); color: white;">
+                        Active
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <a href="{% url 'study_plan_calendar' plan.pk %}" class="btn btn-outline" style="background: white; color: var(--primary-600);">
+                📆 Calendar View
+            </a>
+        </div>
+        
+        <div class="card-body">
+            <div class="grid grid-4">
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Exam Date</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; margin-top: var(--space-2);">
+                        {{ plan.exam_date|date:"M d, Y" }}
+                    </div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Days Remaining</div>
+                    <div class="stat-value">{{ plan.days_remaining }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Daily Hours</div>
+                    <div class="stat-value">{{ plan.daily_study_hours }}h</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Progress</div>
+                    <div class="stat-value">{{ progress.completion_percentage }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Overview -->
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📊 Progress Overview</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-4" style="margin-bottom: var(--space-4);">
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">Total Topics</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ progress.total_topics }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">Completed</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">{{ progress.completed_topics }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">Remaining</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning);">{{ progress.remaining_topics }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">Status</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: {% if progress.on_track %}var(--success){% else %}var(--danger){% endif %};">
+                        {% if progress.on_track %}✅ On Track{% else %}⚠️ Behind{% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-container" style="height: 20px;">
+                <div class="progress-bar" style="width: {{ progress.completion_percentage }}%;"></div>
+            </div>
+            <div class="progress-text">
+                <span>{{ progress.completed_topics }}/{{ progress.total_topics }} topics completed</span>
+                <span>{{ progress.completion_percentage }}%</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Schedule -->
+    {% if today_schedule %}
+    <div class="card card-gradient" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📅 Today's Schedule</h2>
+            <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">
+                {{ today_schedule.date|date:"l, M d" }}
+            </span>
+        </div>
+        <div class="card-body">
+            {% for scheduled in today_schedule.scheduledtopic_set.all %}
+            <div class="schedule-topic" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                <div class="schedule-time" style="color: white;">{{ scheduled.allocated_hours }}h</div>
+                <div style="flex: 1; color: white;">
+                    <div style="font-weight: 600; margin-bottom: var(--space-1);">{{ scheduled.topic.name }}</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">
+                            {{ scheduled.topic.get_importance_display }}
+                        </span>
+                        {% if scheduled.topic.is_exam_critical %}
+                        <span style="margin-left: var(--space-2);">⭐ Exam Critical</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if scheduled.is_completed %}
+                <span class="badge badge-success">✓ Done</span>
+                {% else %}
+                <a href="{% url 'topic_complete' scheduled.topic.pk %}" class="btn btn-success btn-sm">
+                    Mark Complete
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <div style="margin-top: var(--space-4); display: flex; gap: var(--space-3);">
+                <a href="{% url 'daily_schedule_detail' today_schedule.pk %}" class="btn btn-outline" style="flex: 1; background: white; color: var(--primary-600);">
+                    View Full Schedule
+                </a>
+                {% if not today_schedule.is_completed %}
+                <a href="{% url 'daily_schedule_complete' today_schedule.pk %}" class="btn btn-success">
+                    ✓ Mark Day Complete
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Upcoming Week -->
+    {% if week_schedules %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📆 Next 7 Days</h2>
+        </div>
+        <div class="card-body">
+            {% for schedule in week_schedules %}
+            <div class="schedule-day {% if schedule.date == today_schedule.date %}today{% endif %}" style="margin-bottom: var(--space-4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                    <div>
+                        <div class="schedule-date">{{ schedule.date|date:"l" }}</div>
+                        <div class="schedule-day-name">{{ schedule.date|date:"F d, Y" }}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Total Hours</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary-600);">
+                            {{ schedule.total_hours_planned }}h
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="schedule-topics">
+                    {% for scheduled in schedule.scheduledtopic_set.all|slice:":3" %}
+                    <div class="schedule-topic">
+                        <div class="schedule-time">{{ scheduled.allocated_hours }}h</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">{{ scheduled.topic.name }}</div>
+                            <div style="font-size: 0.875rem; color: var(--neutral-600);">
+                                {{ scheduled.topic.get_importance_display }} Priority
+                            </div>
+                        </div>
+                        {% if scheduled.is_completed %}
+                        <span class="badge badge-success">✓</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if schedule.scheduledtopic_set.count > 3 %}
+                    <div style="text-align: center; padding: var(--space-2); color: var(--neutral-600); font-size: 0.875rem;">
+                        +{{ schedule.scheduledtopic_set.count|add:"-3" }} more topics
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <a href="{% url 'daily_schedule_detail' schedule.pk %}" class="btn btn-secondary btn-sm" style="margin-top: var(--space-3); width: 100%;">
+                    View Full Day
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- All Schedules -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📋 All Scheduled Days ({{ all_schedules.count }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-3">
+                {% for schedule in all_schedules %}
+                <a href="{% url 'daily_schedule_detail' schedule.pk %}" class="card" style="text-decoration: none; {% if schedule.is_completed %}opacity: 0.6;{% endif %}">
+                    <div class="card-body">
+                        <div style="font-size: 0.875rem; color: var(--primary-600); font-weight: 600; margin-bottom: var(--space-1);">
+                            {{ schedule.date|date:"M d, Y" }}
+                        </div>
+                        <div style="font-size: 1rem; font-weight: 600; color: var(--neutral-900); margin-bottom: var(--space-2);">
+                            {{ schedule.date|date:"l" }}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.875rem; color: var(--neutral-600);">
+                                {{ schedule.scheduledtopic_set.count }} topics
+                            </span>
+                            <span style="font-weight: 700; color: var(--primary-600);">
+                                {{ schedule.total_hours_planned }}h
+                            </span>
+                        </div>
+                        {% if schedule.is_completed %}
+                        <span class="badge badge-success" style="margin-top: var(--space-2);">✓ Completed</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

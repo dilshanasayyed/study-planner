@@ -1,0 +1,147 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Review Topics - {{ pdf.title }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>📝 Review Extracted Topics</h1>
+            <p style="color: var(--neutral-600); margin-top: var(--space-2);">
+                Review, edit, and select topics extracted from <strong>{{ pdf.title }}</strong>
+            </p>
+        </div>
+    </div>
+    
+    <div class="card" style="margin-bottom: var(--space-6);">
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>💡 Instructions:</strong>
+                <ol style="margin: var(--space-2) 0 0 var(--space-5);">
+                    <li>Review the topics extracted from your PDF</li>
+                    <li>Edit names, set importance levels, and adjust estimated hours</li>
+                    <li>Uncheck any topics you don't want to create</li>
+                    <li>Select the subject to add these topics to</li>
+                    <li>Click "Create Selected Topics" when ready</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Subject Selection -->
+        <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header">
+                <h2 class="card-title">1️⃣ Select Subject</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="subject" class="form-label">Add topics to subject <span style="color: var(--danger);">*</span></label>
+                    <select name="subject" id="subject" class="form-control" required>
+                        <option value="">-- Select Subject --</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.pk }}" {% if pdf.subject.pk == subject.pk %}selected{% endif %}>
+                            {{ subject.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Topics List -->
+        <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header">
+                <h2 class="card-title">2️⃣ Review Topics ({{ extracted_topics|length }})</h2>
+                <div style="display: flex; gap: var(--space-2);">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="selectAll()">Select All</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="deselectAll()">Deselect All</button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if extracted_topics %}
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--neutral-50); border-bottom: 2px solid var(--neutral-200);">
+                                <th style="padding: var(--space-3); text-align: left; width: 50px;">
+                                    <input type="checkbox" id="select-all" onclick="toggleAll(this)" checked>
+                                </th>
+                                <th style="padding: var(--space-3); text-align: left;">Topic Name</th>
+                                <th style="padding: var(--space-3); text-align: left; width: 150px;">Importance</th>
+                                <th style="padding: var(--space-3); text-align: left; width: 120px;">Est. Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for topic in extracted_topics %}
+                            <tr style="border-bottom: 1px solid var(--neutral-100);">
+                                <td style="padding: var(--space-3);">
+                                    <input type="checkbox" name="topic_{{ forloop.counter0 }}_include" class="topic-checkbox" checked>
+                                </td>
+                                <td style="padding: var(--space-3);">
+                                    <input type="text" name="topic_{{ forloop.counter0 }}_name" value="{{ topic.name }}" class="form-control" style="margin: 0;">
+                                </td>
+                                <td style="padding: var(--space-3);">
+                                    <select name="topic_{{ forloop.counter0 }}_importance" class="form-control form-control-sm">
+                                        <option value="high">High</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </td>
+                                <td style="padding: var(--space-3);">
+                                    <input type="number" name="topic_{{ forloop.counter0 }}_hours" value="2.0" step="0.5" min="0.5" class="form-control form-control-sm" style="margin: 0;">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <h3 class="empty-state-title">No Topics Extracted</h3>
+                    <p class="empty-state-text">We couldn't automatically extract topics from this PDF. You can create topics manually.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Submit -->
+        {% if extracted_topics %}
+        <div class="card">
+            <div class="card-body">
+                <div style="display: flex; gap: var(--space-3); align-items: center;">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                        ✅ Create Selected Topics
+                    </button>
+                    <a href="{% url 'pdf_detail' pdf.pk %}" class="btn btn-secondary btn-lg">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+function toggleAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.topic-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.topic-checkbox');
+    checkboxes.forEach(cb => cb.checked = true);
+    document.getElementById('select-all').checked = true;
+}
+
+function deselectAll() {
+    const checkboxes = document.querySelectorAll('.topic-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    document.getElementById('select-all').checked = false;
+}
+</script>
+{% endblock %}

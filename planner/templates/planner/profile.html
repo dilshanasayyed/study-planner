@@ -1,0 +1,112 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Profile - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>Profile Settings ⚙️</h1>
+            <p style="color: var(--neutral-600); margin-top: var(--space-2);">Manage your account and preferences</p>
+        </div>
+    </div>
+    
+    <div class="grid grid-3" style="margin-bottom: var(--space-8);">
+        <!-- User Info Card -->
+        <div class="card card-gradient">
+            <div class="card-body text-center">
+                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4); font-size: 2.5rem;">
+                    👤
+                </div>
+                <h3 style="color: white; margin-bottom: var(--space-2);">{{ user.username }}</h3>
+                {% if user.email %}
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.875rem;">{{ user.email }}</p>
+                {% endif %}
+                <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div style="font-size: 0.875rem; color: rgba(255,255,255,0.8);">Member Since</div>
+                    <div style="font-weight: 600; color: white;">{{ user.date_joined|date:"M d, Y" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header">
+                <h2 class="card-title">📊 Your Statistics</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Subjects</div>
+                        <div class="stat-value">{{ stats.total_subjects }}</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: var(--warning);">
+                        <div class="stat-label">Total Topics</div>
+                        <div class="stat-value">{{ stats.total_topics }}</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: var(--success);">
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value">{{ stats.completed_topics }}</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: var(--info);">
+                        <div class="stat-label">PDFs Uploaded</div>
+                        <div class="stat-value">{{ stats.total_pdfs }}</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: var(--primary-600);">
+                        <div class="stat-label">Active Plans</div>
+                        <div class="stat-value">{{ stats.active_plans }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Progress</div>
+                     <div class="stat-value">
+                            {{ progress_percent }}%
+                     </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profile Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">✏️ Edit Profile</h2>
+        </div>
+        
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="grid grid-2">
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                            <span style="color: var(--danger); font-size: 0.875rem; display: block; margin-top: var(--space-1);">
+                                {{ error }}
+                            </span>
+                            {% endfor %}
+                        {% endif %}
+                        {% if field.help_text %}
+                            <span style="color: var(--neutral-600); font-size: 0.875rem; display: block; margin-top: var(--space-1);">
+                                {{ field.help_text }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div style="margin-top: var(--space-6);">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        💾 Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

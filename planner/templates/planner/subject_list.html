@@ -1,0 +1,74 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Subjects - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>My Subjects 📚</h1>
+            <p style="color: var(--neutral-600); margin-top: var(--space-2);">Manage all your study subjects</p>
+        </div>
+        <a href="{% url 'subject_create' %}" class="btn btn-primary">
+            ➕ Add Subject
+        </a>
+    </div>
+    
+    {% if subjects %}
+    <div class="grid grid-3">
+        {% for subject in subjects %}
+        <div class="subject-card fade-in stagger-{{ forloop.counter|divisibleby:3 }}">
+            <div class="subject-card-header">
+                <div>
+                    <h3 class="subject-name">{{ subject.name }}</h3>
+                    {% if subject.description %}
+                    <p style="color: var(--neutral-600); font-size: 0.875rem; margin-top: var(--space-2);">
+                        {{ subject.description|truncatewords:15 }}
+                    </p>
+                    {% endif %}
+                </div>
+                <a href="{% url 'subject_edit' subject.pk %}" class="btn btn-icon btn-secondary" title="Edit">
+                    ✏️
+                </a>
+            </div>
+            
+            <div class="subject-stats">
+                <div class="subject-stat">
+                    <div class="subject-stat-label">Topics</div>
+                    <div class="subject-stat-value">{{ subject.total_topics }}</div>
+                </div>
+                <div class="subject-stat">
+                    <div class="subject-stat-label">Completed</div>
+                    <div class="subject-stat-value" style="color: var(--success);">{{ subject.completed_topics }}</div>
+                </div>
+                <div class="subject-stat">
+                    <div class="subject-stat-label">Progress</div>
+                    <div class="subject-stat-value">{{ subject.get_progress_percentage }}%</div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ subject.get_progress_percentage }}%;"></div>
+            </div>
+            
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-4);">
+                <a href="{% url 'subject_detail' subject.pk %}" class="btn btn-primary" style="flex: 1;">
+                    View Details
+                </a>
+                <a href="{% url 'topic_create' subject.pk %}" class="btn btn-outline" title="Add Topic">
+                    ➕
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <h2 class="empty-state-title">No Subjects Yet</h2>
+        <p class="empty-state-text">Create your first subject to start organizing your study materials</p>
+        <a href="{% url 'subject_create' %}" class="btn btn-primary btn-lg">Create First Subject</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

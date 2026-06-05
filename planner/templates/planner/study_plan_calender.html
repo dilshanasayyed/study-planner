@@ -1,0 +1,110 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Calendar - {{ plan.name }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>📆 Study Plan Calendar</h1>
+            <div style="margin-top: var(--space-2); display: flex; gap: var(--space-2); align-items: center;">
+                <span class="badge badge-primary">{{ plan.subject.name }}</span>
+                <span class="badge badge-secondary">{{ plan.name }}</span>
+            </div>
+        </div>
+        <a href="{% url 'study_plan_detail' plan.pk %}" class="btn btn-primary">
+            ← Back to Schedule
+        </a>
+    </div>
+    
+    {% if schedules_by_month %}
+        {% for month, schedules in schedules_by_month.items %}
+        <div class="card" style="margin-bottom: var(--space-8);">
+            <div class="card-header">
+                <h2 class="card-title">{{ schedules.0.date|date:"F Y" }}</h2>
+                <span class="badge badge-primary">{{ schedules|length }} days</span>
+            </div>
+            <div class="card-body">
+                <div class="calendar">
+                    {% for schedule in schedules %}
+                    <div class="calendar-day {% if schedule.is_completed %}has-schedule{% endif %} {% if schedule.date == today %}today{% endif %}"
+                         onclick="window.location.href='{% url 'daily_schedule_detail' schedule.pk %}'">
+                        <div style="font-weight: 700; font-size: 1.125rem;">
+                            {{ schedule.date|date:"d" }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--neutral-600); margin-top: var(--space-1);">
+                            {{ schedule.scheduledtopic_set.count }} topics
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--primary-600); margin-top: var(--space-1);">
+                            {{ schedule.total_hours_planned }}h
+                        </div>
+                        {% if schedule.is_completed %}
+                        <div style="position: absolute; top: 4px; right: 4px;">
+                            <span style="font-size: 1rem;">✓</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📅</div>
+        <h2 class="empty-state-title">No Schedule Generated</h2>
+        <p class="empty-state-text">This study plan doesn't have a schedule yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-2);
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: white;
+    border: 2px solid var(--neutral-100);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+}
+
+.calendar-day:hover {
+    border-color: var(--primary-600);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.calendar-day.today {
+    background: var(--primary-600);
+    color: white;
+    font-weight: 700;
+}
+
+.calendar-day.today div {
+    color: white !important;
+}
+
+.calendar-day.has-schedule {
+    border-color: var(--success);
+    border-width: 3px;
+}
+
+@media (max-width: 768px) {
+    .calendar {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Complete Revision - {{ revision.topic.name }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+    <div class="card" style="margin-top: var(--space-16); border: 2px solid var(--success);">
+        <div class="card-header">
+            <h1 class="card-title" style="color: var(--success);">
+                🔄 Complete Revision {{ revision.revision_number }}
+            </h1>
+        </div>
+        
+        <div class="card-body">
+            <div class="alert alert-success">
+                <strong>🎉 Great work!</strong> You're about to complete a revision task. Keep up the excellent study habits!
+            </div>
+            
+            <!-- Topic Info -->
+            <div style="background: var(--primary-50); padding: var(--space-5); border-radius: var(--radius-lg); margin-bottom: var(--space-6); border-left: 4px solid var(--primary-600);">
+                <h3 style="margin-bottom: var(--space-3);">{{ revision.topic.name }}</h3>
+                <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3);">
+                    <span class="badge badge-primary">{{ revision.topic.subject.name }}</span>
+                    <span class="badge badge-{{ revision.topic.importance }}">{{ revision.topic.get_importance_display }}</span>
+                    {% if revision.topic.is_exam_critical %}
+                    <span class="badge badge-danger">⭐ Exam Critical</span>
+                    {% endif %}
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-4);">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Scheduled Date</div>
+                        <div style="font-weight: 600;">{{ revision.scheduled_date|date:"M d, Y" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Revision Number</div>
+                        <div style="font-weight: 600;">{{ revision.revision_number }} of 3</div>
+                    </div>
+                    {% if revision.topic.completion_date %}
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Originally Completed</div>
+                        <div style="font-weight: 600;">{{ revision.topic.completion_date|date:"M d, Y" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--neutral-600);">Days Since Completion</div>
+                        <div style="font-weight: 600;">{{ revision.topic.completion_date|timesince }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div style="margin-bottom: var(--space-6);">
+                <div style="font-size: 0.875rem; font-weight: 600; color: var(--neutral-700); margin-bottom: var(--space-2);">
+                    Revision Progress
+                </div>
+                <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    <div style="flex: 1; height: 8px; background: {% if revision.revision_number >= 1 %}var(--success){% else %}var(--neutral-200){% endif %}; border-radius: var(--radius-full);"></div>
+                    <div style="flex: 1; height: 8px; background: {% if revision.revision_number >= 2 %}var(--success){% else %}var(--neutral-200){% endif %}; border-radius: var(--radius-full);"></div>
+                    <div style="flex: 1; height: 8px; background: {% if revision.revision_number >= 3 %}var(--success){% else %}var(--neutral-200){% endif %}; border-radius: var(--radius-full);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: var(--space-1); font-size: 0.75rem; color: var(--neutral-600);">
+                    <span>7 days</span>
+                    <span>21 days</span>
+                    <span>45 days</span>
+                </div>
+            </div>
+            
+            <!-- Revision Tips -->
+            <div class="alert alert-info" style="margin-bottom: var(--space-6);">
+                <strong>💡 Revision Tips:</strong>
+                <ul style="margin: var(--space-2) 0 0 var(--space-5);">
+                    <li>Review your original notes and materials</li>
+                    <li>Test yourself with practice questions</li>
+                    <li>Focus on areas you found challenging</li>
+                    <li>Make connections with other topics</li>
+                    <li>Explain the concept to someone else</li>
+                </ul>
+            </div>
+            
+            <!-- Form -->
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="notes" class="form-label">Revision Notes (Optional)</label>
+                    <textarea name="notes" id="notes" class="form-control" rows="5" placeholder="What did you review? What stuck with you? Any insights or connections?"></textarea>
+                    <span style="color: var(--neutral-600); font-size: 0.875rem; display: block; margin-top: var(--space-1);">
+                        Track your revision insights for future reference
+                    </span>
+                </div>
+                
+                <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+                    <button type="submit" class="btn btn-success btn-lg" style="flex: 1;">
+                        ✅ Mark Revision Complete
+                    </button>
+                    <a href="{% url 'revision_list' %}" class="btn btn-secondary btn-lg">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

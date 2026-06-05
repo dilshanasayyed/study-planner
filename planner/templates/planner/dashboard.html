@@ -1,0 +1,211 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Dashboard - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Header -->
+    <div style="margin-bottom: var(--space-8);">
+        <h1 style="font-size: 2.5rem; margin-bottom: var(--space-2);">
+            Welcome, {{ user.username }}! 👋
+        </h1>
+        <p style="color: var(--neutral-600); font-size: 1.125rem;">
+            Here's your study progress overview
+        </p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-4" style="margin-bottom: var(--space-8);">
+
+        <div class="stat-card">
+            <div class="stat-label">Total Subjects</div>
+            <div class="stat-value">{{ subjects.count }}</div>
+            <div class="stat-change positive">
+                📚 Active learning
+            </div>
+        </div>
+
+        <div class="stat-card" style="border-left-color: var(--success);">
+            <div class="stat-label">Completed Topics</div>
+            <div class="stat-value">{{ completed_topics }}</div>
+            <div class="stat-change positive">✅ Great progress!</div>
+        </div>
+
+        <div class="stat-card" style="border-left-color: var(--warning);">
+            <div class="stat-label">Total Topics</div>
+            <div class="stat-value">{{ total_topics }}</div>
+        </div>
+
+        <div class="stat-card" style="border-left-color: var(--primary-600);">
+            <div class="stat-label">Overall Progress</div>
+            <div class="stat-value">{{ overall_progress }}%</div>
+            <div class="progress-container" style="margin-top: var(--space-3);">
+                <div class="progress-bar" style="width: {{ overall_progress }}%;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Active Study Plans -->
+    {% if active_plans %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">🎯 Active Study Plans</h2>
+            <a href="{% url 'study_plan_list' %}" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+
+        <div class="card-body">
+            {% for plan in active_plans %}
+            <div class="topic-item" style="margin-bottom: var(--space-3);">
+                <div class="topic-info" style="flex: 1;">
+                    <div class="topic-name">{{ plan.name }}</div>
+                    <div class="topic-meta">
+                        <span class="badge badge-primary">{{ plan.subject.name }}</span>
+                        <span>📅 Exam: {{ plan.exam_date|date:"M d, Y" }}</span>
+                        <span class="badge {% if plan.days_remaining < 7 %}badge-danger{% else %}badge-warning{% endif %}">
+                            ⏰ {{ plan.days_remaining }} days left
+                        </span>
+                    </div>
+                </div>
+                <a href="{% url 'study_plan_detail' plan.pk %}" class="btn btn-primary btn-sm">
+                    View Plan →
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Today's Schedule -->
+    {% if today_schedule %}
+    <div class="card card-gradient" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📅 Today's Schedule</h2>
+            <span class="badge">{{ today_schedule.date|date:"l, M d" }}</span>
+        </div>
+
+        <div class="card-body">
+            {% for scheduled in today_schedule.scheduledtopic_set.all %}
+            <div class="schedule-topic">
+                <div class="schedule-time">{{ scheduled.allocated_hours }}h</div>
+                <div style="flex: 1;">
+                    <strong>{{ scheduled.topic.name }}</strong><br>
+                    <small>{{ scheduled.topic.subject.name }}</small>
+                </div>
+                {% if scheduled.is_completed %}
+                <span class="badge badge-success">✓ Done</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <a href="{% url 'daily_schedule_detail' today_schedule.pk %}" class="btn btn-outline" style="margin-top: var(--space-4);">
+                View Full Schedule
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Revisions -->
+    {% if pending_revisions %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">🔄 Pending Revisions</h2>
+            <a href="{% url 'revision_list' %}" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+
+        <div class="card-body">
+            {% for revision in pending_revisions|slice:":5" %}
+            <div class="revision-card">
+                <div class="revision-number">R{{ revision.revision_number }}</div>
+                <div class="revision-info">
+                    <div class="revision-topic">{{ revision.topic.name }}</div>
+                    <div class="revision-date">
+                        📅 {{ revision.scheduled_date|date:"M d, Y" }}
+                    </div>
+                </div>
+                <a href="{% url 'revision_complete' revision.pk %}" class="btn btn-success btn-sm">
+                    Complete
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="grid grid-3" style="margin-bottom: var(--space-8);">
+
+        <a href="{% url 'subject_create' %}" class="card text-center">
+            <div class="card-body">
+                <div style="font-size: 3rem;">➕</div>
+                <h3>Add Subject</h3>
+                <p>Create a new subject</p>
+            </div>
+        </a>
+
+        <a href="{% url 'pdf_upload' %}" class="card text-center">
+            <div class="card-body">
+                <div style="font-size: 3rem;">📄</div>
+                <h3>Upload PDF</h3>
+                <p>Extract topics from PDF</p>
+            </div>
+        </a>
+
+        <a href="{% url 'revision_list' %}" class="card text-center">
+            <div class="card-body">
+                <div style="font-size: 3rem;">🔄</div>
+                <h3>Revisions</h3>
+                <p>{{ pending_revision_count }} pending</p>
+            </div>
+        </a>
+
+    </div>
+
+    <!-- Recent PDFs -->
+    {% if recent_pdfs %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📚 Recent PDFs</h2>
+            <a href="{% url 'pdf_list' %}" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+
+        <div class="card-body">
+            <div class="grid grid-2">
+                {% for pdf in recent_pdfs %}
+                <div class="topic-item">
+                    <div class="topic-info">
+                        <div class="topic-name">{{ pdf.title }}</div>
+                        <div class="topic-meta">
+                            {% if pdf.subject %}
+                            <span class="badge badge-primary">{{ pdf.subject.name }}</span>
+                            {% endif %}
+                            <span>{{ pdf.page_count }} pages</span>
+                            <span class="badge badge-secondary">
+                                {{ pdf.get_processing_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{% url 'pdf_detail' pdf.pk %}" class="btn btn-secondary btn-sm">View</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not has_subjects %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <h2>Welcome to Study Planner!</h2>
+        <p>Get started by creating your first subject or uploading a PDF</p>
+        <div>
+            <a href="{% url 'subject_create' %}" class="btn btn-primary">Create Subject</a>
+            <a href="{% url 'pdf_upload' %}" class="btn btn-outline">Upload PDF</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

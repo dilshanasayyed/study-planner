@@ -1,0 +1,176 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Revisions - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card-header" style="margin-bottom: var(--space-8);">
+        <div>
+            <h1>Revision Tasks 🔄</h1>
+            <p style="color: var(--neutral-600); margin-top: var(--space-2);">
+                Spaced repetition schedule: Review at 7, 21, and 45 days after completion
+            </p>
+        </div>
+    </div>
+    
+    <!-- Pending Revisions -->
+    {% if pending_revisions %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">⚠️ Pending Revisions ({{ pending_revisions.count }})</h2>
+            <span class="badge badge-danger">Action Required</span>
+        </div>
+        <div class="card-body">
+            <div style="margin-bottom: var(--space-4);">
+                <div class="alert alert-warning">
+                    <strong>📌 Priority:</strong> Complete these revisions to reinforce your learning and improve long-term retention!
+                </div>
+            </div>
+            
+            <div class="topic-list">
+                {% for revision in pending_revisions %}
+                <div class="revision-card {% if revision.is_overdue %}overdue{% elif revision.is_due %}due-soon{% endif %}" style="margin-bottom: var(--space-3);">
+                    <div class="revision-number">R{{ revision.revision_number }}</div>
+                    
+                    <div class="revision-info" style="flex: 1;">
+                        <div class="revision-topic">{{ revision.topic.name }}</div>
+                        <div class="revision-date">
+                            <span class="badge badge-primary">{{ revision.topic.subject.name }}</span>
+                            {% if revision.is_overdue %}
+                                <span class="badge badge-danger">⚠️ Overdue: {{ revision.scheduled_date|date:"M d, Y" }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">📅 Due: {{ revision.scheduled_date|date:"M d, Y" }}</span>
+                            {% endif %}
+                            <span style="color: var(--neutral-600); font-size: 0.875rem;">
+                                ({{ revision.scheduled_date|timesince }} ago)
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'revision_complete' revision.pk %}" class="btn btn-success">
+                        ✓ Complete Revision
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Upcoming Revisions -->
+    {% if upcoming_revisions %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📅 Upcoming Revisions ({{ upcoming_revisions.count }})</h2>
+            <span class="badge badge-secondary">Scheduled</span>
+        </div>
+        <div class="card-body">
+            <div class="topic-list">
+                {% for revision in upcoming_revisions %}
+                <div class="revision-card" style="margin-bottom: var(--space-3);">
+                    <div class="revision-number" style="background: var(--neutral-400);">R{{ revision.revision_number }}</div>
+                    
+                    <div class="revision-info" style="flex: 1;">
+                        <div class="revision-topic">{{ revision.topic.name }}</div>
+                        <div class="revision-date">
+                            <span class="badge badge-primary">{{ revision.topic.subject.name }}</span>
+                            <span class="badge badge-secondary">📅 {{ revision.scheduled_date|date:"M d, Y" }}</span>
+                            <span style="color: var(--neutral-600); font-size: 0.875rem;">
+                                (in {{ revision.scheduled_date|timeuntil }})
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <span class="badge badge-secondary" style="padding: var(--space-2) var(--space-4);">
+                        Upcoming
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Completed Revisions -->
+    {% if completed_revisions %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">✅ Completed Revisions ({{ completed_revisions.count }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="topic-list">
+                {% for revision in completed_revisions %}
+                <div class="revision-card completed" style="margin-bottom: var(--space-3); opacity: 0.7;">
+                    <div class="revision-number" style="background: var(--success);">R{{ revision.revision_number }}</div>
+                    
+                    <div class="revision-info" style="flex: 1;">
+                        <div class="revision-topic">{{ revision.topic.name }}</div>
+                        <div class="revision-date">
+                            <span class="badge badge-primary">{{ revision.topic.subject.name }}</span>
+                            <span class="badge badge-success">✓ Completed: {{ revision.completed_date|date:"M d, Y" }}</span>
+                        </div>
+                        {% if revision.notes %}
+                        <p style="margin-top: var(--space-2); color: var(--neutral-600); font-size: 0.875rem;">
+                            {{ revision.notes|truncatewords:20 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <span class="badge badge-success">✅ Done</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Empty State -->
+    {% if not pending_revisions and not upcoming_revisions and not completed_revisions %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🔄</div>
+        <h2 class="empty-state-title">No Revisions Yet</h2>
+        <p class="empty-state-text">
+            Complete some topics to automatically schedule revisions at 7, 21, and 45 days intervals
+        </p>
+        <a href="{% url 'subject_list' %}" class="btn btn-primary btn-lg">Go to Subjects</a>
+    </div>
+    {% endif %}
+    
+    <!-- Info Card -->
+    <div class="card" style="margin-top: var(--space-8); background: linear-gradient(135deg, var(--info-light) 0%, var(--primary-50) 100%); border: 2px solid var(--info);">
+        <div class="card-body">
+            <h3 style="margin-bottom: var(--space-3);">📚 Why Spaced Repetition Works</h3>
+            <p style="margin-bottom: var(--space-3); color: var(--neutral-700);">
+                Research shows that reviewing material at increasing intervals significantly improves long-term retention. 
+                Our system automatically schedules revisions at scientifically-proven intervals:
+            </p>
+            <div class="grid grid-3">
+                <div style="text-align: center; padding: var(--space-4); background: white; border-radius: var(--radius-md);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary-600); margin-bottom: var(--space-2);">
+                        7 Days
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">
+                        First Revision<br>Short-term recall
+                    </div>
+                </div>
+                <div style="text-align: center; padding: var(--space-4); background: white; border-radius: var(--radius-md);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary-600); margin-bottom: var(--space-2);">
+                        21 Days
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">
+                        Second Revision<br>Medium-term retention
+                    </div>
+                </div>
+                <div style="text-align: center; padding: var(--space-4); background: white; border-radius: var(--radius-md);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary-600); margin-bottom: var(--space-2);">
+                        45 Days
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600);">
+                        Third Revision<br>Long-term mastery
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

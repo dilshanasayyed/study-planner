@@ -1,0 +1,45 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}Delete {{ subject.name }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+    <div class="card" style="margin-top: var(--space-16); border: 2px solid var(--danger);">
+        <div class="card-header">
+            <h1 class="card-title" style="color: var(--danger);">⚠️ Confirm Deletion</h1>
+        </div>
+        
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <strong>Warning:</strong> This action cannot be undone!
+            </div>
+            
+            <p style="font-size: 1.125rem; margin-bottom: var(--space-4);">
+                Are you sure you want to delete <strong>"{{ subject.name }}"</strong>?
+            </p>
+            
+            <div style="background: var(--neutral-50); padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4);">
+                <p style="margin-bottom: var(--space-2);"><strong>This will permanently delete:</strong></p>
+                <ul style="margin-left: var(--space-5); color: var(--neutral-700);">
+                    <li>{{ subject.total_topics }} topic(s)</li>
+                    <li>All associated study plans</li>
+                    <li>All progress data</li>
+                    <li>All PDF associations</li>
+                </ul>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div style="display: flex; gap: var(--space-3);">
+                    <button type="submit" class="btn btn-danger" style="flex: 1;">
+                        Yes, Delete Subject
+                    </button>
+                    <a href="{% url 'subject_detail' subject.pk %}" class="btn btn-secondary" style="flex: 1;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

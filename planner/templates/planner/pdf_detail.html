@@ -1,0 +1,166 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}{{ pdf.title }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="card card-gradient" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <div>
+                <h1 class="card-title" style="font-size: 2rem;">📄 {{ pdf.title }}</h1>
+                {% if pdf.subject %}
+                <span class="badge" style="background: rgba(255,255,255,0.2); color: white; margin-top: var(--space-2);">
+                    {{ pdf.subject.name }}
+                </span>
+                {% endif %}
+            </div>
+            <a href="{% url 'pdf_delete' pdf.pk %}" class="btn btn-danger">
+                🗑️ Delete
+            </a>
+        </div>
+        
+        <div class="card-body">
+            <div class="grid grid-4">
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Pages</div>
+                    <div class="stat-value">{{ pdf.page_count }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Topics Created</div>
+                    <div class="stat-value">{{ created_topics.count }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Topics Found</div>
+                    <div class="stat-value">{{ extracted_topics|length }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Status</div>
+                    <div style="font-size: 0.875rem; font-weight: 600; margin-top: var(--space-2);">
+                        {{ pdf.get_processing_status_display }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Processing Status -->
+    {% if pdf.processing_status == 'processing' %}
+    <div class="alert alert-info">
+        <strong>⏳ Processing...</strong> Your PDF is being analyzed. This may take a few moments.
+        <div class="loading-spinner" style="margin-top: var(--space-3);"></div>
+    </div>
+    {% elif pdf.processing_status == 'failed' %}
+    <div class="alert alert-danger">
+        <strong>❌ Processing Failed</strong> We couldn't process this PDF. Try uploading a different version or create topics manually.
+    </div>
+    {% elif pdf.processing_status == 'completed' %}
+    <div class="alert alert-success">
+        <strong>✅ Processing Complete!</strong> {{ extracted_topics|length }} topics were found in this PDF.
+        {% if created_topics.count == 0 %}
+        <a href="{% url 'pdf_topics_review' pdf.pk %}" class="btn btn-success btn-sm" style="margin-left: var(--space-3);">
+            Review & Create Topics
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Created Topics -->
+    {% if created_topics %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">✅ Created Topics ({{ created_topics.count }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="topic-list">
+                {% for topic in created_topics %}
+                <div class="topic-item {% if topic.is_completed %}completed{% endif %}">
+                    <div class="topic-info" style="flex: 1;">
+                        <div class="topic-name">{{ topic.name }}</div>
+                        <div class="topic-meta">
+                            <span class="badge badge-{{ topic.importance }}">{{ topic.get_importance_display }}</span>
+                            {% if topic.is_exam_critical %}
+                            <span class="badge badge-danger">⭐ Exam Critical</span>
+                            {% endif %}
+                            <span>⏱️ {{ topic.estimated_hours }}h</span>
+                            {% if topic.is_completed %}
+                            <span class="badge badge-success">✓ Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'topic_edit' topic.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Extracted Topics Preview -->
+    {% if extracted_topics and created_topics.count == 0 %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📝 Extracted Topics Preview ({{ extracted_topics|length }})</h2>
+            <a href="{% url 'pdf_topics_review' pdf.pk %}" class="btn btn-primary btn-sm">
+                Review & Create
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                These topics were automatically extracted from your PDF. Review and select which ones to create.
+            </div>
+            <div class="topic-list">
+                {% for topic in extracted_topics|slice:":10" %}
+                <div class="topic-item">
+                    <div class="topic-info">
+                        <div class="topic-name">{{ topic.name }}</div>
+                        {% if topic.number %}
+                        <div class="topic-meta">
+                            <span class="badge badge-secondary">{{ topic.number }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% if extracted_topics|length > 10 %}
+                <p style="text-align: center; color: var(--neutral-600); margin-top: var(--space-4);">
+                    And {{ extracted_topics|length|add:"-10" }} more...
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- PDF Information -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">ℹ️ PDF Information</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-2">
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600); margin-bottom: var(--space-1);">File Name</div>
+                    <div style="font-weight: 600;">{{ pdf.pdf_file.name|slice:"5:" }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600); margin-bottom: var(--space-1);">Uploaded</div>
+                    <div style="font-weight: 600;">{{ pdf.uploaded_at|date:"F d, Y \a\t g:i A" }}</div>
+                </div>
+                {% if pdf.subject %}
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600); margin-bottom: var(--space-1);">Subject</div>
+                    <div style="font-weight: 600;">
+                        <a href="{% url 'subject_detail' pdf.subject.pk %}">{{ pdf.subject.name }}</a>
+                    </div>
+                </div>
+                {% endif %}
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--neutral-600); margin-bottom: var(--space-1);">Processing Status</div>
+                    <div style="font-weight: 600;">{{ pdf.get_processing_status_display }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'planner/base.html' %}
+
+{% block title %}{{ subject.name }} - Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="card card-gradient" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <div>
+                <h1 class="card-title" style="font-size: 2rem;">{{ subject.name }}</h1>
+                {% if subject.description %}
+                <p style="opacity: 0.9; margin-top: var(--space-2);">{{ subject.description }}</p>
+                {% endif %}
+            </div>
+            <div style="display: flex; gap: var(--space-2);">
+                <a href="{% url 'subject_edit' subject.pk %}" class="btn btn-outline" style="background: white; color: var(--primary-600);">
+                    ✏️ Edit
+                </a>
+                <a href="{% url 'subject_delete' subject.pk %}" class="btn btn-danger">
+                    🗑️ Delete
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="grid grid-4">
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Total Topics</div>
+                    <div class="stat-value">{{ subject.total_topics }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Completed</div>
+                    <div class="stat-value">{{ subject.completed_topics }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Remaining</div>
+                    <div class="stat-value">{{ subject.total_topics|add:"-"|add:subject.completed_topics }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Progress</div>
+                    <div class="stat-value">{{ progress }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="grid grid-4" style="margin-bottom: var(--space-8);">
+        <a href="{% url 'topic_create' subject.pk %}" class="card" style="text-decoration: none;">
+            <div class="card-body text-center">
+                <div style="font-size: 2rem; margin-bottom: var(--space-2);">➕</div>
+                <h4>Add Topic</h4>
+            </div>
+        </a>
+        <a href="{% url 'study_plan_create' subject.pk %}" class="card" style="text-decoration: none;">
+            <div class="card-body text-center">
+                <div style="font-size: 2rem; margin-bottom: var(--space-2);">📅</div>
+                <h4>Create Study Plan</h4>
+            </div>
+        </a>
+        <a href="{% url 'pdf_upload' %}" class="card" style="text-decoration: none;">
+            <div class="card-body text-center">
+                <div style="font-size: 2rem; margin-bottom: var(--space-2);">📄</div>
+                <h4>Upload PDF</h4>
+            </div>
+        </a>
+        <a href="{% url 'subject_list' %}" class="card" style="text-decoration: none;">
+            <div class="card-body text-center">
+                <div style="font-size: 2rem; margin-bottom: var(--space-2);">📚</div>
+                <h4>All Subjects</h4>
+            </div>
+        </a>
+    </div>
+    
+    <!-- Topics -->
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📝 Topics ({{ topics.count }})</h2>
+            <a href="{% url 'topic_create' subject.pk %}" class="btn btn-primary btn-sm">
+                ➕ Add Topic
+            </a>
+        </div>
+        
+        <div class="card-body">
+            {% if topics %}
+            <div class="topic-list">
+                {% for topic in topics %}
+                <div class="topic-item {% if topic.is_completed %}completed{% endif %}">
+                    <input type="checkbox" class="topic-checkbox" {% if topic.is_completed %}checked disabled{% endif %}>
+                    
+                    <div class="topic-info">
+                        <div class="topic-name">{{ topic.name }}</div>
+                        <div class="topic-meta">
+                            <span class="badge badge-{{ topic.importance }}">{{ topic.get_importance_display }}</span>
+                            {% if topic.is_exam_critical %}
+                            <span class="badge badge-danger">⭐ Exam Critical</span>
+                            {% endif %}
+                            <span>⏱️ {{ topic.estimated_hours }}h</span>
+                            {% if topic.is_completed %}
+                            <span class="badge badge-success">✓ Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="topic-actions">
+                        {% if not topic.is_completed %}
+                        <a href="{% url 'topic_complete' topic.pk %}" class="btn btn-success btn-sm" title="Complete">
+                            ✓
+                        </a>
+                        {% else %}
+                        <a href="{% url 'topic_uncomplete' topic.pk %}" class="btn btn-secondary btn-sm" title="Mark Incomplete">
+                            ↺
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'topic_edit' topic.pk %}" class="btn btn-secondary btn-sm" title="Edit">
+                            ✏️
+                        </a>
+                        <a href="{% url 'topic_delete' topic.pk %}" class="btn btn-danger btn-sm" title="Delete">
+                            🗑️
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <h3 class="empty-state-title">No Topics Yet</h3>
+                <p class="empty-state-text">Add topics manually or upload a PDF to extract them automatically</p>
+                <div style="display: flex; gap: var(--space-3); justify-content: center;">
+                    <a href="{% url 'topic_create' subject.pk %}" class="btn btn-primary">Add Topic</a>
+                    <a href="{% url 'pdf_upload' %}" class="btn btn-outline">Upload PDF</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- PDFs -->
+    {% if pdfs %}
+    <div class="card" style="margin-bottom: var(--space-8);">
+        <div class="card-header">
+            <h2 class="card-title">📄 PDFs ({{ pdfs.count }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-2">
+                {% for pdf in pdfs %}
+                <div class="topic-item">
+                    <div class="topic-info">
+                        <div class="topic-name">{{ pdf.title }}</div>
+                        <div class="topic-meta">
+                            <span>{{ pdf.page_count }} pages</span>
+                            <span class="badge badge-{{ pdf.processing_status }}">{{ pdf.get_processing_status_display }}</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'pdf_detail' pdf.pk %}" class="btn btn-secondary btn-sm">View</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Study Plans -->
+    {% if study_plans %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📅 Study Plans ({{ study_plans.count }})</h2>
+            <a href="{% url 'study_plan_create' subject.pk %}" class="btn btn-primary btn-sm">
+                Create Plan
+            </a>
+        </div>
+        <div class="card-body">
+            {% for plan in study_plans %}
+            <div class="topic-item" style="margin-bottom: var(--space-3);">
+                <div class="topic-info">
+                    <div class="topic-name">{{ plan.name }}</div>
+                    <div class="topic-meta">
+                        <span>📅 Exam: {{ plan.exam_date|date:"M d, Y" }}</span>
+                        <span>⏰ {{ plan.days_remaining }} days left</span>
+                        {% if plan.is_active %}
+                        <span class="badge badge-success">Active</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'study_plan_detail' plan.pk %}" class="btn btn-primary btn-sm">View Plan</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
