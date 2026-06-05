@@ -96,9 +96,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'study_plannerdb',
-        'USER': 'postgres',
-        'PASSWORD': 'Dilshana@01',
-        'HOST': '127.0.0.1',
+        'USER': 'study_plannerdb_user',
+        'PASSWORD': 'BD4s5TYhyxojaomx60li7Mqzq8Fvcidt',
+        'HOST': 'dpg-d8hgdqhkh4rs73eea0cg-a',
         'PORT': '5432',
     }
 }
